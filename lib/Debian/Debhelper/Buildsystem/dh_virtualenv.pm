@@ -126,8 +126,14 @@ sub install {
     my $venv = $this->get_venv_builddir();
     my $prefix = $this->get_install_root();
 
+    # `pip install .` is painfully slow (see https://github.com/pypa/pip/issues/2195)
+    # We build an sdist and install that instead.
     $this->doit_in_sourcedir(
-        $python, $pip, 'install', '.');
+        $python, 'setup.py', 'sdist');
+
+    chomp(my $name = `$python setup.py --fullname`);
+    $this->doit_in_sourcedir(
+        $python, $pip, 'install', "dist/$name.tar.gz");
 
     # Before we copy files, let's make the symlinks in the 'usr/local'
     # relative to the build path.
